@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -13,21 +14,44 @@ func main() {
 }
 
 func NRKFlow() {
-	minute := "00"
-	hour := "12"
+	// minute := "00"
 	month := "07"
 	year := "19"
-	var day string
-	for i := 1; i < 31; i++ {
-		if i < 10 {
-			day = "0" + strconv.Itoa(i)
+	var day, hour string
+
+	for hours := 1; hours < 24; hours++ {
+		if hours < 10 {
+			hour = "0" + strconv.Itoa(hours)
 		} else {
-			day = strconv.Itoa(i)
+			hour = strconv.Itoa(hours)
 		}
-		fileUrl := NRKNewsURL(hour, day, month, year)
-		fmt.Println(fileUrl)
-		if err := DownloadFile("nrk/"+"20"+year+"-"+month+"-"+day+"-"+hour+minute+".xml", fileUrl); err != nil {
-			panic(err)
+
+		for days := 1; days < 31; days++ {
+			if days < 10 {
+				day = "0" + strconv.Itoa(days)
+			} else {
+				day = strconv.Itoa(days)
+			}
+			fileUrl := NRKNewsURL(hour, day, month, year)
+			fmt.Println(fileUrl)
+			filename := "nrk/" + "20" + year + "-" + month + "-" + day + "-" + hour + ".xml"
+			if err := DownloadFile(filename, fileUrl); err != nil {
+				panic(err)
+			}
+			file, err := os.Open(filename)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fi, err := file.Stat()
+			if err != nil {
+				log.Fatal(err)
+			}
+			if fi.Size() == 0 {
+				file.Close()
+				os.Remove(filename)
+			} else {
+				file.Close()
+			}
 		}
 	}
 }
